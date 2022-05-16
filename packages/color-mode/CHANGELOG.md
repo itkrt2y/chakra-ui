@@ -1,5 +1,14 @@
 # Change Log
 
+## 2.0.1
+
+### Patch Changes
+
+- [#6030](https://github.com/chakra-ui/chakra-ui/pull/6030)
+  [`17aeb7185`](https://github.com/chakra-ui/chakra-ui/commit/17aeb7185b7439e04abec843df186fc2b1869d6f)
+  Thanks [@RagOfJoes](https://github.com/RagOfJoes)! - Improve SSR for color
+  mode by adding `manager.get()` in the default state
+
 ## 2.0.0
 
 ### Major Changes
