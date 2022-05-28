@@ -19,18 +19,18 @@ type LogicalPlacementMap = Record<
   { ltr: ToastPosition; rtl: ToastPosition }
 >
 
+const logicals: LogicalPlacementMap = {
+  "top-start": { ltr: "top-left", rtl: "top-right" },
+  "top-end": { ltr: "top-right", rtl: "top-left" },
+  "bottom-start": { ltr: "bottom-left", rtl: "bottom-right" },
+  "bottom-end": { ltr: "bottom-right", rtl: "bottom-left" },
+}
+
 export function getToastPlacement(
   position: ToastPositionWithLogical | undefined,
   dir: "ltr" | "rtl",
-): ToastPosition | undefined {
+): ToastPosition {
   const computedPosition = position ?? "bottom"
-  const logicals: LogicalPlacementMap = {
-    "top-start": { ltr: "top-left", rtl: "top-right" },
-    "top-end": { ltr: "top-right", rtl: "top-left" },
-    "bottom-start": { ltr: "bottom-left", rtl: "bottom-right" },
-    "bottom-end": { ltr: "bottom-right", rtl: "bottom-left" },
-  }
-
-  const logical = logicals[computedPosition as keyof typeof logicals]
+  const logical = logicals[computedPosition as LogicalToastPosition]
   return logical?.[dir] ?? computedPosition
 }
