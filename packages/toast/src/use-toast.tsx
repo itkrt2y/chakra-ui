@@ -3,7 +3,7 @@ import { ThemingProps, useChakra } from "@chakra-ui/system"
 import * as React from "react"
 import type { RenderProps, ToastId, ToastOptions } from "./toast.types"
 import { createToastFn } from "./toast"
-import { ToastPosition } from "./toast.placement"
+import type { ToastPositionWithLogical } from "./toast.placement"
 
 export interface UseToastOptions extends ThemingProps<"Alert"> {
   /**
@@ -11,7 +11,7 @@ export interface UseToastOptions extends ThemingProps<"Alert"> {
    *
    * @default "bottom"
    */
-  position?: ToastPosition
+  position?: ToastPositionWithLogical
   /**
    * The delay before the toast hides (in milliseconds)
    * If set to `null`, toast will never dismiss.

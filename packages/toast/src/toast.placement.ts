@@ -1,11 +1,4 @@
-export type LogicalToastPosition =
-  | "top-start"
-  | "top-end"
-  | "bottom-start"
-  | "bottom-end"
-
-export type ToastPositionWithLogical =
-  | LogicalToastPosition
+export type ToastPosition =
   | "top"
   | "top-left"
   | "top-right"
@@ -13,10 +6,13 @@ export type ToastPositionWithLogical =
   | "bottom-left"
   | "bottom-right"
 
-export type ToastPosition = Exclude<
-  ToastPositionWithLogical,
-  LogicalToastPosition
->
+type LogicalToastPosition =
+  | "top-start"
+  | "top-end"
+  | "bottom-start"
+  | "bottom-end"
+
+export type ToastPositionWithLogical = ToastPosition | LogicalToastPosition
 
 type LogicalPlacementMap = Record<
   LogicalToastPosition,
@@ -24,7 +20,7 @@ type LogicalPlacementMap = Record<
 >
 
 export function getToastPlacement(
-  position: ToastPosition | undefined,
+  position: ToastPositionWithLogical | undefined,
   dir: "ltr" | "rtl",
 ): ToastPosition | undefined {
   const computedPosition = position ?? "bottom"
