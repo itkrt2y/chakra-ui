@@ -1,12 +1,11 @@
 import "regenerator-runtime/runtime"
+import { Worker } from "node:worker_threads"
 import glob from "glob"
 import path from "path"
 import { promisify } from "util"
 import { promises as fs } from "fs"
-import * as docgen from "react-docgen-typescript"
 import { ComponentDoc } from "react-docgen-typescript"
 import mkdirp from "mkdirp"
-import { propNames } from "@chakra-ui/styled-system"
 
 type ComponentInfo = {
   def: ComponentDoc
@@ -18,14 +17,6 @@ type ComponentInfo = {
 
 const globAsync = promisify(glob)
 
-const excludedPropNames = propNames.concat([
-  "as",
-  "apply",
-  "sx",
-  "__css",
-  "css",
-])
-
 const rootDir = path.join(__dirname, "..", "..", "..")
 const sourcePath = path.join(rootDir, "packages")
 const outputPath = path.join(__dirname, "..", "dist", "components")
@@ -36,8 +27,6 @@ const cjsIndexFilePath = path.join(basePath, "index.cjs.js")
 const esmIndexFilePath = path.join(basePath, "index.esm.js")
 const typeFilePath = path.join(basePath, "index.d.ts")
 
-const tsConfigPath = path.join(sourcePath, "..", "tsconfig.json")
-
 export async function main() {
   const componentFiles = await findComponentFiles()
 
@@ -46,7 +35,9 @@ export async function main() {
   }
 
   log("Parsing files for component types...")
-  const parsedInfo = parseInfo(componentFiles)
+  const parsedInfo = (
+    (await parseInfo(componentFiles)) as ComponentDoc[]
+  ).flat()
 
   log("Extracting component info...")
   const componentInfo = extractComponentInfo(parsedInfo)
@@ -89,27 +80,24 @@ async function findComponentFiles() {
  * Parse files with react-doc-gen-typescript
  */
 function parseInfo(filePaths: string[]) {
-  const { parse } = docgen.withCustomConfig(tsConfigPath, {
-    shouldRemoveUndefinedFromOptional: true,
-    propFilter: (prop, component) => {
-      const isStyledSystemProp = excludedPropNames.includes(prop.name)
-      const isHTMLElementProp =
-        prop.parent?.fileName.includes("node_modules") ?? false
-      const isHook = component.name.startsWith("use")
-      const isTypeScriptNative =
-        prop.parent?.fileName.includes("node_modules/typescript") ?? false
+  return Promise.all(
+    filePaths.map(
+      (file) =>
+        new Promise((resolve, reject) => {
+          const absoluteFilePath = path.join(sourcePath, file)
 
-      return (
-        (isHook && !isTypeScriptNative) ||
-        !(isStyledSystemProp || isHTMLElementProp)
-      )
-    },
-  })
-
-  return filePaths.flatMap((file) => {
-    const absoluteFilePath = path.join(sourcePath, file)
-    return parse(absoluteFilePath)
-  })
+          const worker = new Worker("./src/parse-info-worker.ts", {
+            workerData: absoluteFilePath,
+          })
+          worker.on("message", resolve)
+          worker.on("error", reject)
+          worker.on("exit", (code) => {
+            if (code !== 0)
+              reject(new Error(`Worker stopped with exit code ${code}`))
+          })
+        }),
+    ),
+  )
 }
 
 /**
